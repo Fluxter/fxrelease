@@ -39,7 +39,7 @@ class ReleaseCommand extends AbstractReleaseCommand
 
         $version = $this->getMilestone();
         $releaseBranch = "release/" . $version->getName();
-        
+
         $branch = $this->git->getCurrentBranch();
         $this->ss->text("Checking out release branch...");
         $this->git->checkout($releaseBranch);
@@ -54,6 +54,12 @@ class ReleaseCommand extends AbstractReleaseCommand
 
         $this->ss->text("Pushing release branch...");
         $this->git->push();
+
+        $release = $this->ss->ask("Preparation done. Do you want to release? (y/n)");
+        if (strtolower($release) != "y") {
+            $this->ss->info("Stopping! Just re-run the command if you are ready to release.");
+            return 0;
+        }
 
         $this->ss->text("Creating merge request...");
         $mr = $this->platform->createMergeRequest($version, $releaseBranch, $this->config->getMasterBranch());
