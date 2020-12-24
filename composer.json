@@ -1,0 +1,19 @@
+{
+    "name": "fluxter/fxrelease",
+    "description": "A small symfony helper CLI tool",
+    "require": {
+        "symfony/finder": "^5.1",
+        "symfony/console": "^5.1",
+        "symfony/filesystem": "^5.1",
+        "zeichen32/gitlabapibundle": "^5.0",
+        "czproject/git-php": "^3.18"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fluxter\\FXRelease\\": "."
+        }
+    },
+    "bin": [
+        "pch"
+    ]
+}
