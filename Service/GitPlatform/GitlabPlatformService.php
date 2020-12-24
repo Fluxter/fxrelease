@@ -33,7 +33,9 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
     {
         $milestones = [];
 
-        $response = $this->client->milestones()->all($this->config->getProjectId());
+        $response = $this->client->milestones()->all($this->config->getProjectId(), [
+            "state" => "active"
+        ]);
         foreach ($response as $remote) {
             $milestones[$remote["iid"]] = new PlatformMilestone($remote["iid"], $remote["id"], $remote["title"]);
         }

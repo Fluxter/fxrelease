@@ -1,6 +1,6 @@
 {
     "name": "fluxter/fxrelease",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A small symfony helper CLI tool",
     "require": {
         "symfony/finder": "^5.1",
@@ -15,6 +15,6 @@
         }
     },
     "bin": [
-        "pch"
+        "fxrelease"
     ]
 }
