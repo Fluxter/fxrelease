@@ -15,4 +15,6 @@ interface ReleasePlatformProviderInterface
     public function createMergeRequest(PlatformMilestone $milestone, string $sourceBranch, string $targetBranch): PlatformMergeRequest;
 
     public function isMergeRequestReady(PlatformMergeRequest $mr): bool;
+
+    public function finishRelease(PlatformMergeRequest $mr, PlatformMilestone $milestone): void;
 }

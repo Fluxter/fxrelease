@@ -27,7 +27,7 @@ abstract class AbstractReleaseCommand extends AbstractCommand
         $this->ss->text("Please select a milestone!");
         $this->ss->text("Current available versions / milestones:");
         foreach ($milestones as $m) {
-            $this->ss->text(" - [{$m->getId()}]: {$m->getName()}");
+            $this->ss->text(" - [{$m->getId()}]: {$m->getName()} (Global ID: {$m->getGlobalId()})");
         }
 
         if (count($milestones) == 0) {

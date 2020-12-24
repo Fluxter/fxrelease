@@ -39,6 +39,7 @@ class ReleaseCommand extends AbstractReleaseCommand
 
         $version = $this->getMilestone();
         $releaseBranch = "release/" . $version->getName();
+        
         $branch = $this->git->getCurrentBranch();
         $this->ss->text("Checking out release branch...");
         $this->git->checkout($releaseBranch);
@@ -54,6 +55,7 @@ class ReleaseCommand extends AbstractReleaseCommand
         $this->ss->text("Pushing release branch...");
         $this->git->push();
 
+        $this->ss->text("Creating merge request...");
         $mr = $this->platform->createMergeRequest($version, $releaseBranch, $this->config->getMasterBranch());
         $this->ss->info("Created merge request. Please review it and resolve the WIP status at " . $mr->getUrl());
 
@@ -61,6 +63,9 @@ class ReleaseCommand extends AbstractReleaseCommand
             $this->output->write(".");
             sleep(2);
         }
+
+        $this->ss->text("Finishing the release...");
+        $this->platform->finishRelease($mr, $version);
 
         return 0;
     }

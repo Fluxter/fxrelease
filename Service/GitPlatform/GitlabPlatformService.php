@@ -35,7 +35,7 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
 
         $response = $this->client->milestones()->all($this->config->getProjectId());
         foreach ($response as $remote) {
-            $milestones[$remote["iid"]] = new PlatformMilestone($remote["iid"], $remote["title"]);
+            $milestones[$remote["iid"]] = new PlatformMilestone($remote["iid"], $remote["id"], $remote["title"]);
         }
 
         return $milestones;
@@ -52,10 +52,30 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
         return new PlatformMergeRequest($mrData["iid"], $mrData["web_url"]);
     }
 
+    private function getIssuesForMilestone(PlatformMilestone $milestone): array
+    {
+        // return $this->client->milestones()->issues($this->config->getProjectId(), $milestone->getId());
+        return $this->client->issues()->all($this->config->getProjectId(), [
+            "milestone" => $milestone->getName()
+        ]);
+    }
+
+    private function getDescriptionForMilestone(PlatformMilestone $milestone): string
+    {
+        $issues = $this->getIssuesForMilestone($milestone);
+        $desc = "This is the auto-generated Changelog for version v{$milestone->getName()}";
+
+        foreach ($issues as $issue) {
+            $desc .= "\n* [Issue #{$issue['iid']}]({$issue['web_url']}): \t{$issue['title']}";
+        }
+
+        return $desc;
+    }
+
     public function createMergeRequest(PlatformMilestone $milestone, string $sourceBranch, string $targetBranch): PlatformMergeRequest
     {
         $title = "WIP: Release v" . $milestone->getName();
-        $description = "Release yeha!";
+        $description = $this->getDescriptionForMilestone($milestone);
         $existing = $this->client->mergeRequests()->all($this->config->getProjectId(), [
             "state" => "opened",
             "source_branch" => $sourceBranch,
@@ -75,6 +95,7 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
         $this->client->mergeRequests()->update($this->config->getProjectId(), $mr->getId(), [
             "title" => $title,
             "description" => $description,
+            'milestone_id' => $milestone->getGlobalId()
         ]);
 
         return $mr;
@@ -83,6 +104,30 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
     public function isMergeRequestReady(PlatformMergeRequest $mr): bool
     {
         $remoteMr = $this->client->mergeRequests()->show($this->config->getProjectId(), $mr->getId());
-        return strpos($remoteMr["title"], "WIP:" === 0);
+        return strpos($remoteMr["title"], "WIP:") !== 0;
+    }
+
+    public function finishRelease(PlatformMergeRequest $mr, PlatformMilestone $milestone): void
+    {
+        // Accept the merge request
+        $this->client->mergeRequests()->merge($this->config->getProjectId(), $mr->getId());
+
+        // Create the tag
+        $this->client->tags()->create($this->config->getProjectId(), [
+            'tag_name' => 'v' . $milestone->getName(),
+            "release_description" => $this->getDescriptionForMilestone($milestone),
+            "ref" => $this->config->getMasterBranch(),
+        ]);
+
+        // // Create the Release
+        // $this->client->tags()->createRelease($this->config->getProjectId(), "v" . $milestone->getName(), [
+        //     "release_description" => $this->getDescriptionForMilestone($milestone),
+        //     "ref" => $this->config->getMasterBranch(),
+        // ]);
+
+        // Close the milestone
+        $this->client->milestones()->update($this->config->getProjectId(), $milestone->getGlobalId(), [
+            "state_event" => "close",
+        ]);
     }
 }
