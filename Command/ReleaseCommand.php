@@ -55,16 +55,17 @@ class ReleaseCommand extends AbstractReleaseCommand
         $this->ss->text("Pushing release branch...");
         $this->git->push();
 
+        $this->ss->text("Creating merge request...");
+        $mr = $this->platform->createMergeRequest($version, $releaseBranch, $this->config->getMasterBranch());
+        $this->ss->info("Created merge request. Please review it at " . $mr->getUrl());
+
         $release = $this->ss->ask("Preparation done. Do you want to release? (y/n)");
         if (strtolower($release) != "y") {
             $this->ss->info("Stopping! Just re-run the command if you are ready to release.");
             return 0;
         }
 
-        $this->ss->text("Creating merge request...");
-        $mr = $this->platform->createMergeRequest($version, $releaseBranch, $this->config->getMasterBranch());
-        $this->ss->info("Created merge request. Please review it and resolve the WIP status at " . $mr->getUrl());
-
+        $this->ss->info("Waiting for the MergeRequest to be marked as ready...");
         while (!$this->platform->isMergeRequestReady($mr)) {
             $this->output->write(".");
             sleep(2);
