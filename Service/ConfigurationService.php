@@ -27,8 +27,8 @@ class ConfigurationService
         $data = json_decode(file_get_contents($file), true);
         $config = new Configuration();
         
-        if (!array_key_exists("apiKey", $data)) {
-            $config->setApiKey($_ENV["FXRELEASE_APIKEY"]);
+        if (!array_key_exists("apiKey", $data) && getenv("FXRELEASE_APIKEY")) {
+            $config->setApiKey(getenv("FXRELEASE_APIKEY"));
         }
         foreach ($data as $key => $value) {
             $config->{"set" . ucfirst($key)}($value);

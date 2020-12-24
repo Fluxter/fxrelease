@@ -2,6 +2,6 @@
     "projectId": 83,
     "url": "https://git.fluxter.net",
     "versionFile": "composer.json",
-    "versionPattern": "\"version\": "FXRELEASE_VERSION_HERE\"",
+    "versionPattern": "\"version\": \"FXRELEASE_VERSION_HERE\"",
     "masterBranch": "master"
 }
