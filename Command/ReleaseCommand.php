@@ -51,7 +51,6 @@ class ReleaseCommand extends AbstractReleaseCommand
         $this->ss->text("Checking out release branch...");
         $this->git->checkout($releaseBranch);
 
-        
         $this->setVersionNumbers($version);
         $this->ss->text("Merging $branch into $releaseBranch...");
         $this->git->merge($branch);

@@ -32,7 +32,11 @@ class GitCliService
     {
         $current = $this->getCurrentBranch();
         $this->git->checkout($branch);
-        $this->git->pull();
+        try {
+            $this->git->pull();
+        } catch (\Exception $ex) {
+            // Maybe the branch doesnt exist anymore
+        }
         $this->git->checkout($current);
         $this->git->merge($branch);
     }

@@ -6,6 +6,7 @@ use Fluxter\FXRelease\Model\Configuration;
 use Fluxter\FXRelease\Model\PlatformMergeRequest;
 use Fluxter\FXRelease\Model\PlatformMilestone;
 use Fluxter\FXRelease\Service\GitPlatform\ReleasePlatformProviderInterface;
+use Gitlab\Api\MergeRequests;
 use Gitlab\Client;
 
 class GitlabPlatformService implements ReleasePlatformProviderInterface
@@ -61,7 +62,7 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
             "milestone" => $milestone->getName(),
         ]);
 
-        return array_values(array_filter($allIssues, fn($issue) => !$issue["confidential"]));
+        return array_values(array_filter($allIssues, fn ($issue) => !$issue["confidential"]));
     }
 
     private function getDescriptionForMilestone(PlatformMilestone $milestone): string
@@ -74,6 +75,11 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
         }
 
         return $desc;
+    }
+
+    private function loadMergeRequest(PlatformMergeRequest $ms): array
+    {
+        return $this->client->mergeRequests()->show($this->config->getProjectId(), $ms->getId());
     }
 
     public function createMergeRequest(PlatformMilestone $milestone, string $sourceBranch, string $targetBranch): PlatformMergeRequest
@@ -117,9 +123,10 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
         $this->client->mergeRequests()->merge($this->config->getProjectId(), $mr->getId());
 
         // Create the tag
+        $ms = $this->loadMergeRequest($mr);
         $this->client->tags()->create($this->config->getProjectId(), [
             'tag_name' => 'v' . $milestone->getName(),
-            "release_description" => $this->getDescriptionForMilestone($milestone),
+            "release_description" => $ms["description"],
             "ref" => $this->config->getMasterBranch(),
         ]);
 
