@@ -64,3 +64,13 @@ $ composer global update fluxter/fxrelease
     "masterBranch": "prod"
 }
 ```
+### Label Map (this example is the default)
+```json
+{
+    "labelMap": {
+        "bug": "BUG",
+        "suggestion": "NEU",
+        "enhancement": "VERBESSERUNG"
+    }
+}
+```

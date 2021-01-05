@@ -68,10 +68,48 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
     private function getDescriptionForMilestone(PlatformMilestone $milestone): string
     {
         $issues = $this->getIssuesForMilestone($milestone);
-        $desc = "This is the auto-generated Changelog for version v{$milestone->getName()}";
+        $desc = "This is the auto-generated Changelog for version v{$milestone->getName()}\n\n";
+
+        $issuesByCategory = [];
+        $labelMap = $this->config->getLabelMap();
+        foreach ($labelMap as $label => $name) {
+            $issuesByCategory[$name] = [
+                "description" => "",
+                "issues" => []
+            ];
+        }
+        $issuesByCategory["Sonstige"] = [
+            "description" => "",
+            "issues" => []
+        ];
 
         foreach ($issues as $issue) {
-            $desc .= "\n* [Issue #{$issue['iid']}]({$issue['web_url']}): \t{$issue['title']}";
+            if (count($issue["labels"])) {
+                $added = false;
+                foreach ($issue["labels"] as $label) {
+                    if (!in_array($label, array_keys($labelMap))) {
+                        continue;
+                    }
+
+                    $issuesByCategory[$labelMap[$label]]["issues"][] = $issue;
+                    $added = true;
+                }
+                if ($added) {
+                    continue;
+                }
+            }
+
+            $issuesByCategory["Sonstige"]["issues"][] = $issue;
+            //
+        }
+
+        $categoriesToShow = array_filter($issuesByCategory, fn(array $a) => count($a["issues"]) != 0);
+
+        foreach ($categoriesToShow as $name => $cat) {
+            $desc .= "\n\n**$name**";
+            foreach ($cat["issues"] as $issue) {
+                $desc .= "\n* [Issue #{$issue['iid']}]({$issue['web_url']}): \t{$issue['title']}";
+            }
         }
 
         return $desc;

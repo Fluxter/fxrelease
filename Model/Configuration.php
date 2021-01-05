@@ -10,6 +10,11 @@ class Configuration
     private ?string $url = null;
     private array $versionFiles = [];
     private string $masterBranch = "master";
+    private array $labelMap = [
+        "suggestion" => "NEU",
+        "enhancement" => "VERBESSERUNG",
+        "bug" => "BUGFIX",
+    ];
     
     /**
      * Get the value of projectId
@@ -123,5 +128,25 @@ class Configuration
     public function addVersionFile(ConfigurationVersionFile $file)
     {
         $this->versionFiles[] = $file;
+    }
+
+    /**
+     * Get the value of labelMap
+     */
+    public function getLabelMap()
+    {
+        return $this->labelMap;
+    }
+
+    /**
+     * Set the value of labelMap
+     *
+     * @return  self
+     */
+    public function setLabelMap($labelMap)
+    {
+        $this->labelMap = $labelMap;
+
+        return $this;
     }
 }
