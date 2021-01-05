@@ -5,6 +5,7 @@ namespace Fluxter\FXRelease\Command;
 use Fluxter\FXRelease\Command\Abstraction\AbstractCommand;
 use Fluxter\FXRelease\Command\Abstraction\AbstractReleaseCommand;
 use Fluxter\FXRelease\Model\Configuration;
+use Fluxter\FXRelease\Model\ConfigurationVersionFile;
 use Fluxter\FXRelease\Service\ConfigurationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -47,9 +48,9 @@ class ReleaseCommand extends AbstractReleaseCommand
         $this->ss->text("Merging $branch into $releaseBranch...");
         $this->git->merge($branch);
 
-        if ($this->config->getVersionFile() && $this->config->getVersionPattern()) {
-            $this->ss->text("Setting version in file {$this->config->getVersionFile()}...");
-            $this->setVersionNumber($version->getName());
+        foreach($this->config->getVersionFiles() as $file) {
+            $this->ss->text("Setting version in file {$file->getFile()}...");
+            $this->setVersionNumber($file, $version->getName());
         }
 
         $this->ss->text("Pushing release branch...");
@@ -77,17 +78,17 @@ class ReleaseCommand extends AbstractReleaseCommand
         return 0;
     }
 
-    private function setVersionNumber(string $version)
+    private function setVersionNumber(ConfigurationVersionFile $file, string $version)
     {
-        $file = getcwd() . "/" . $this->config->getVersionFile();
-        if (!file_exists($file)) {
-            throw new \Exception("the Version file does not exist! searched for " . realpath($file));
+        $filepath = getcwd() . "/" . $file->getFile();
+        if (!file_exists($filepath)) {
+            throw new \Exception("The versionfile does not exist: " . realpath($filepath));
         }
 
-        $content = file_get_contents($file);
-        $pattern = "/" . str_replace("FXRELEASE_VERSION_HERE", "(.*?)", $this->config->getVersionPattern()) . "/";
-        $content = preg_replace($pattern, str_replace("FXRELEASE_VERSION_HERE", $version, $this->config->getVersionPattern()), $content);
-        file_put_contents($file, $content);
+        $content = file_get_contents($filepath);
+        $pattern = "/" . str_replace("FXRELEASE_VERSION_HERE", "(.*?)", $file->getPattern()) . "/";
+        $content = preg_replace($pattern, str_replace("FXRELEASE_VERSION_HERE", $version, $file->getPattern()), $content);
+        file_put_contents($filepath, $content);
 
         $this->git->commit("Bump version to " . $version);
     }

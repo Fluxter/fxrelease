@@ -3,6 +3,8 @@
 namespace Fluxter\FXRelease\Service;
 
 use Fluxter\FXRelease\Model\Configuration;
+use Fluxter\FXRelease\Model\ConfigurationVersionFile;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 
 class ConfigurationService
@@ -16,26 +18,56 @@ class ConfigurationService
         $this->gitPlatformService = new GitPlatformService();
     }
 
-    public function getConfiguration(): Configuration
+    private function loadConfigArray(): array
     {
         $file = ".fxrelease";
-
         if (!$this->fs->exists($file)) {
             throw new \Exception("The configuration file .fxrelease does not exist!");
         }
 
         $data = json_decode(file_get_contents($file), true);
+        if ($data == null) {
+            throw new \Exception("Your json could not be loaded, maybe syntax error?");
+        }
+
+        return $data;
+    }
+
+    public function getConfiguration(): Configuration
+    {
+        $data = $this->loadConfigArray();
         $config = new Configuration();
         
         if (!array_key_exists("apiKey", $data) && getenv("FXRELEASE_APIKEY")) {
             $config->setApiKey(getenv("FXRELEASE_APIKEY"));
         }
+
+        $specials = ["versionFile", "versionPattern", "versionFiles"];
+
+        $this->addVersionFiles($data, $config);
         foreach ($data as $key => $value) {
+            if (in_array($key, $specials)) {
+                continue;
+            }
+
             $config->{"set" . ucfirst($key)}($value);
         }
 
         $this->validate($config);
         return $config;
+    }
+
+    private function addVersionFiles(array $configFile, Configuration $config): void
+    {
+        if (array_key_exists("versionFile", $configFile) && array_key_exists("versionPattern", $configFile)) {
+            $config->addVersionFile($configFile["versionFile"], $configFile["versionPattern"]);
+        }
+
+        if (array_key_exists("versionFiles", $configFile)) {
+            foreach ($configFile["versionFiles"] as $file) {
+                $config->addVersionFile(new ConfigurationVersionFile($file["file"], $file["pattern"]));
+            }
+        }
     }
     
     private function validate(Configuration $config): bool

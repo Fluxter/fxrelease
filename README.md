@@ -1,7 +1,6 @@
 # Git Release script
 
 ## How to install
-### Globally
 Require the package 
 ```bash
 $ composer global require fluxter/fxrelease
@@ -22,10 +21,46 @@ should work now
 ```bash
 $ composer global update fluxter/fxrelease
 ```
-## How to use
-yea maybe we add it later
 
 
-
-# HINT for development:
-export PATH="$PATH:/workspace/fxrelease"
+## .fxrelease file
+### Project ID (required)
+```json 
+{
+    "projectId": 15,
+}
+```
+### URL (required)
+```json 
+{
+    "url": "https://gitlab.com",
+}
+```
+### Single version file
+```json
+{
+    "versionFile": "composer.json",
+    "versionPattern": "\"version\": \"FXRELEASE_VERSION_HERE\"", 
+}
+```
+### Mulitple version files
+```json
+{
+    "versionFiles": [
+        {
+            "file": "composer.json",
+            "pattern": "\"version\": \"FXRELEASE_VERSION_HERE\"",
+        },
+        {
+            "file": "second_file.blub",
+            "pattern": "my_version_is: FXRELEASE_VERSION_HERE",
+        }
+    ]
+}
+```
+### Master branch (defaults to master)
+```json
+{
+    "masterBranch": "prod"
+}
+```

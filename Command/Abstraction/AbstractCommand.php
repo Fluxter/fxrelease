@@ -20,12 +20,12 @@ abstract class AbstractCommand extends Command
     {
         parent::__construct();
         $this->configService = new ConfigurationService();
-        $this->config = $this->configService->getConfiguration();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->output = $output;
         $this->ss = new SymfonyStyle($input, $output);
+        $this->config = $this->configService->getConfiguration();
     }
 }

@@ -5,6 +5,8 @@ namespace Fluxter\FXRelease\Command\Abstraction;
 use Fluxter\FXRelease\Service\GitCliService;
 use Fluxter\FXRelease\Service\GitPlatformService;
 use Fluxter\FXRelease\Service\GitPlatform\ReleasePlatformProviderInterface;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 abstract class AbstractReleaseCommand extends AbstractCommand
 {
@@ -14,10 +16,14 @@ abstract class AbstractReleaseCommand extends AbstractCommand
     public function __construct()
     {
         parent::__construct();
+        $this->git = new GitCliService();
+    }
 
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        parent::execute($input, $output);
         $platformService = new GitPlatformService();
         $this->platform = $platformService->getPlatform($this->config);
-        $this->git = new GitCliService();
     }
 
     protected function getMilestone()
