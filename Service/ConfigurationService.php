@@ -60,7 +60,7 @@ class ConfigurationService
     private function addVersionFiles(array $configFile, Configuration $config): void
     {
         if (array_key_exists("versionFile", $configFile) && array_key_exists("versionPattern", $configFile)) {
-            $config->addVersionFile($configFile["versionFile"], $configFile["versionPattern"]);
+            $config->addVersionFile(new ConfigurationVersionFile($configFile["versionFile"], $configFile["versionPattern"]));
         }
 
         if (array_key_exists("versionFiles", $configFile)) {
