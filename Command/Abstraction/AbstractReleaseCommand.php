@@ -2,6 +2,7 @@
 
 namespace Fluxter\FXRelease\Command\Abstraction;
 
+use Fluxter\FXRelease\Model\PlatformMilestone;
 use Fluxter\FXRelease\Service\GitCliService;
 use Fluxter\FXRelease\Service\GitPlatformService;
 use Fluxter\FXRelease\Service\GitPlatform\ReleasePlatformProviderInterface;
@@ -29,6 +30,14 @@ abstract class AbstractReleaseCommand extends AbstractCommand
     protected function getMilestone()
     {
         $milestones = $this->platform->getMilestones();
+
+        $currentBranch = $this->git->getCurrentBranch();
+        if (preg_match("/release\/(.*)/", $currentBranch, $matches)) {
+            $found = array_filter($milestones, fn (PlatformMilestone $m) => $m->getName() == $matches[1]);
+            if (count($found) !== 0) {
+                return array_values($found)[0];
+            }
+        }
 
         $this->ss->text("Please select a milestone!");
         $this->ss->text("Current available versions / milestones:");
