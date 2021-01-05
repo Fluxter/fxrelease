@@ -6,6 +6,7 @@ use Fluxter\FXRelease\Model\Configuration;
 use Fluxter\FXRelease\Model\PlatformMergeRequest;
 use Fluxter\FXRelease\Model\PlatformMilestone;
 use Fluxter\FXRelease\Service\GitPlatform\ReleasePlatformProviderInterface;
+use Gitlab\Api\MergeRequests;
 use Gitlab\Client;
 
 class GitlabPlatformService implements ReleasePlatformProviderInterface
@@ -57,21 +58,66 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
     private function getIssuesForMilestone(PlatformMilestone $milestone): array
     {
         // return $this->client->milestones()->issues($this->config->getProjectId(), $milestone->getId());
-        return $this->client->issues()->all($this->config->getProjectId(), [
-            "milestone" => $milestone->getName()
+        $allIssues =  $this->client->issues()->all($this->config->getProjectId(), [
+            "milestone" => $milestone->getName(),
         ]);
+
+        return array_values(array_filter($allIssues, fn ($issue) => !$issue["confidential"]));
     }
 
     private function getDescriptionForMilestone(PlatformMilestone $milestone): string
     {
         $issues = $this->getIssuesForMilestone($milestone);
-        $desc = "This is the auto-generated Changelog for version v{$milestone->getName()}";
+        $desc = "This is the auto-generated Changelog for version v{$milestone->getName()}\n\n";
+
+        $issuesByCategory = [];
+        $labelMap = $this->config->getLabelMap();
+        foreach ($labelMap as $label => $name) {
+            $issuesByCategory[$name] = [
+                "description" => "",
+                "issues" => []
+            ];
+        }
+        $issuesByCategory["Sonstige"] = [
+            "description" => "",
+            "issues" => []
+        ];
 
         foreach ($issues as $issue) {
-            $desc .= "\n* [Issue #{$issue['iid']}]({$issue['web_url']}): \t{$issue['title']}";
+            if (count($issue["labels"])) {
+                $added = false;
+                foreach ($issue["labels"] as $label) {
+                    if (!in_array($label, array_keys($labelMap))) {
+                        continue;
+                    }
+
+                    $issuesByCategory[$labelMap[$label]]["issues"][] = $issue;
+                    $added = true;
+                }
+                if ($added) {
+                    continue;
+                }
+            }
+
+            $issuesByCategory["Sonstige"]["issues"][] = $issue;
+            //
+        }
+
+        $categoriesToShow = array_filter($issuesByCategory, fn(array $a) => count($a["issues"]) != 0);
+
+        foreach ($categoriesToShow as $name => $cat) {
+            $desc .= "\n\n**$name**";
+            foreach ($cat["issues"] as $issue) {
+                $desc .= "\n* [Issue #{$issue['iid']}]({$issue['web_url']}): \t{$issue['title']}";
+            }
         }
 
         return $desc;
+    }
+
+    private function loadMergeRequest(PlatformMergeRequest $ms): array
+    {
+        return $this->client->mergeRequests()->show($this->config->getProjectId(), $ms->getId());
     }
 
     public function createMergeRequest(PlatformMilestone $milestone, string $sourceBranch, string $targetBranch): PlatformMergeRequest
@@ -115,9 +161,10 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
         $this->client->mergeRequests()->merge($this->config->getProjectId(), $mr->getId());
 
         // Create the tag
+        $ms = $this->loadMergeRequest($mr);
         $this->client->tags()->create($this->config->getProjectId(), [
             'tag_name' => 'v' . $milestone->getName(),
-            "release_description" => $this->getDescriptionForMilestone($milestone),
+            "release_description" => $ms["description"],
             "ref" => $this->config->getMasterBranch(),
         ]);
 

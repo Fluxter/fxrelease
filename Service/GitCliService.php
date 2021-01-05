@@ -23,8 +23,21 @@ class GitCliService
         return $this->git->getCurrentBranchName();
     }
 
+    public function isDirty(): bool
+    {
+        return $this->git->hasChanges();
+    }
+
     public function merge(string $branch): void
     {
+        $current = $this->getCurrentBranch();
+        $this->git->checkout($branch);
+        try {
+            $this->git->pull();
+        } catch (\Exception $ex) {
+            // Maybe the branch doesnt exist anymore
+        }
+        $this->git->checkout($current);
         $this->git->merge($branch);
     }
 

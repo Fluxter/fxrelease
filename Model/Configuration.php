@@ -8,9 +8,13 @@ class Configuration
     private ?string $apiKey = null;
     private string $type = "gitlab";
     private ?string $url = null;
-    private ?string $versionFile = null;
-    private ?string $versionPattern = null;
+    private array $versionFiles = [];
     private string $masterBranch = "master";
+    private array $labelMap = [
+        "suggestion" => "NEU",
+        "enhancement" => "VERBESSERUNG",
+        "bug" => "BUGFIX",
+    ];
     
     /**
      * Get the value of projectId
@@ -93,46 +97,6 @@ class Configuration
     }
 
     /**
-     * Get the value of versionFile
-     */
-    public function getVersionFile()
-    {
-        return $this->versionFile;
-    }
-
-    /**
-     * Set the value of versionFile
-     *
-     * @return  self
-     */
-    public function setVersionFile($versionFile)
-    {
-        $this->versionFile = $versionFile;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of versionPattern
-     */
-    public function getVersionPattern()
-    {
-        return $this->versionPattern;
-    }
-
-    /**
-     * Set the value of versionPattern
-     *
-     * @return  self
-     */
-    public function setVersionPattern($versionPattern)
-    {
-        $this->versionPattern = $versionPattern;
-
-        return $this;
-    }
-
-    /**
      * Get the value of masterBranch
      */
     public function getMasterBranch()
@@ -148,6 +112,40 @@ class Configuration
     public function setMasterBranch($masterBranch)
     {
         $this->masterBranch = $masterBranch;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of versionFiles
+     * @return ConfigurationVersionFile[]
+     */
+    public function getVersionFiles()
+    {
+        return $this->versionFiles;
+    }
+
+    public function addVersionFile(ConfigurationVersionFile $file)
+    {
+        $this->versionFiles[] = $file;
+    }
+
+    /**
+     * Get the value of labelMap
+     */
+    public function getLabelMap()
+    {
+        return $this->labelMap;
+    }
+
+    /**
+     * Set the value of labelMap
+     *
+     * @return  self
+     */
+    public function setLabelMap($labelMap)
+    {
+        $this->labelMap = $labelMap;
 
         return $this;
     }
