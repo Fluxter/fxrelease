@@ -35,6 +35,11 @@ class ReleaseCommand extends AbstractReleaseCommand
         parent::execute($input, $output);
 
         $this->ss->section("Preparing release...");
+
+        if ($this->git->isDirty()) {
+            $this->ss->error("Please commit your current changes!");
+            return 1;
+        }
         
         $projectName = $this->platform->getProjectName();
         $this->ss->text("Found project " . $projectName);
