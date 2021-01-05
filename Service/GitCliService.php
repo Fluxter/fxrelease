@@ -25,6 +25,10 @@ class GitCliService
 
     public function merge(string $branch): void
     {
+        $current = $this->getCurrentBranch();
+        $this->git->checkout($branch);
+        $this->git->pull();
+        $this->git->checkout($current);
         $this->git->merge($branch);
     }
 
