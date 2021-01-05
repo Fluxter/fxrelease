@@ -57,9 +57,11 @@ class GitlabPlatformService implements ReleasePlatformProviderInterface
     private function getIssuesForMilestone(PlatformMilestone $milestone): array
     {
         // return $this->client->milestones()->issues($this->config->getProjectId(), $milestone->getId());
-        return $this->client->issues()->all($this->config->getProjectId(), [
-            "milestone" => $milestone->getName()
+        $allIssues =  $this->client->issues()->all($this->config->getProjectId(), [
+            "milestone" => $milestone->getName(),
         ]);
+
+        return array_values(array_filter($allIssues, fn($issue) => !$issue["confidential"]));
     }
 
     private function getDescriptionForMilestone(PlatformMilestone $milestone): string
